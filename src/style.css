@@ -66,6 +66,11 @@ h2 {
   font-weight: 700;
 }
 
+.record {
+  color: var(--correct);
+  font-weight: 700;
+}
+
 #options {
   list-style: none;
   padding: 0;

@@ -2,9 +2,11 @@
 
 let state = createQuiz([]);
 const QUESTION_TIME_LIMIT = 15;
+const BEST_SCORE_STORAGE_KEY = "devDaysQuizBestPercentage";
 let timerInterval = null;
 let remainingSeconds = QUESTION_TIME_LIMIT;
 let questionResolved = false;
+let bestScore = null;
 
 const startScreen = document.getElementById("start-screen");
 const quizScreen = document.getElementById("quiz-screen");
@@ -17,6 +19,48 @@ const feedbackText = document.getElementById("feedback");
 const nextButton = document.getElementById("next-btn");
 const scoreText = document.getElementById("score-text");
 const gradeText = document.getElementById("grade-text");
+const bestScoreText = document.getElementById("best-score-text");
+const resultBestScoreText = document.getElementById("result-best-score-text");
+const newBestMessage = document.getElementById("new-best-message");
+
+function loadBestScore() {
+  try {
+    const storedScore = window.localStorage.getItem(BEST_SCORE_STORAGE_KEY);
+    if (storedScore === null) return null;
+    const parsedScore = Number(storedScore);
+    if (
+      storedScore.trim() === "" ||
+      !Number.isInteger(parsedScore) ||
+      parsedScore < 0 ||
+      parsedScore > 100
+    ) {
+      console.warn("The saved best score is invalid and will be ignored.");
+      return null;
+    }
+    return parsedScore;
+  } catch (error) {
+    console.warn("Unable to read the saved best score.", error);
+    return null;
+  }
+}
+
+function renderStartBestScore() {
+  bestScoreText.hidden = bestScore === null;
+  bestScoreText.textContent = bestScore === null ? "" : `Best score: ${bestScore}%`;
+}
+
+function saveBestScore(percentage) {
+  bestScore = percentage;
+  renderStartBestScore();
+  try {
+    window.localStorage.setItem(BEST_SCORE_STORAGE_KEY, String(percentage));
+  } catch (error) {
+    console.warn("Unable to save the best score.", error);
+  }
+}
+
+bestScore = loadBestScore();
+renderStartBestScore();
 
 function showScreen(screenToShow) {
   [startScreen, quizScreen, resultScreen].forEach((screen) => {
@@ -125,8 +169,15 @@ function showResults() {
   stopQuestionTimer();
   const total = state.questions.length;
   const percentage = calculatePercentage(state.score, total);
+  const newBest = isNewBestScore(percentage, bestScore);
+  if (newBest) {
+    saveBestScore(percentage);
+  }
   scoreText.textContent = `You scored ${state.score} out of ${total} (${percentage}%)`;
   gradeText.textContent = `Grade: ${getGrade(percentage)}`;
+  resultBestScoreText.textContent = `Best score: ${bestScore}%`;
+  newBestMessage.hidden = !newBest;
+  newBestMessage.textContent = newBest ? "🎉 New best score!" : "";
   showScreen(resultScreen);
 }
 
