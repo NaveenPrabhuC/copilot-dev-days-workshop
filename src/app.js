@@ -1,6 +1,6 @@
 // UI code: connects the quiz logic (quiz.js) to the page (index.html).
 
-const state = { questions: [], current: 0, score: 0 };
+let state = createQuiz([]);
 const QUESTION_TIME_LIMIT = 15;
 let timerInterval = null;
 let remainingSeconds = QUESTION_TIME_LIMIT;
@@ -26,9 +26,7 @@ function showScreen(screenToShow) {
 
 function startQuiz() {
   stopQuestionTimer();
-  state.questions = shuffle(QUESTIONS);
-  state.current = 0;
-  state.score = 0;
+  state = createQuiz(shuffle(QUESTIONS));
   showScreen(quizScreen);
   renderQuestion();
 }
@@ -96,24 +94,27 @@ function resolveQuestion(selectedIndex, selectedButton, timedOut = false) {
   if (timedOut) {
     buttons[question.answer].classList.add("correct");
     feedbackText.textContent = "Time's up!";
-  } else if (isCorrect(question, selectedIndex)) {
-    state.score++;
-    selectedButton.classList.add("correct");
-    feedbackText.textContent = "Correct!";
   } else {
-    selectedButton.classList.add("wrong");
-    buttons[question.answer].classList.add("correct");
-    feedbackText.textContent = "Not quite. The correct answer is highlighted.";
+    const result = answerQuestion(state, selectedIndex);
+    state = result.state;
+    if (result.correct) {
+      selectedButton.classList.add("correct");
+      feedbackText.textContent = "Correct!";
+    } else {
+      selectedButton.classList.add("wrong");
+      buttons[question.answer].classList.add("correct");
+      feedbackText.textContent = "Not quite. The correct answer is highlighted.";
+    }
   }
 
   nextButton.hidden = false;
   nextButton.focus();
 }
 
-function nextQuestion() {
+function handleNextQuestion() {
   stopQuestionTimer();
-  state.current++;
-  if (state.current < state.questions.length) {
+  state = nextQuestion(state);
+  if (!isQuizFinished(state)) {
     renderQuestion();
   } else {
     showResults();
@@ -131,4 +132,4 @@ function showResults() {
 
 document.getElementById("start-btn").addEventListener("click", startQuiz);
 document.getElementById("restart-btn").addEventListener("click", startQuiz);
-nextButton.addEventListener("click", nextQuestion);
+nextButton.addEventListener("click", handleNextQuestion);
