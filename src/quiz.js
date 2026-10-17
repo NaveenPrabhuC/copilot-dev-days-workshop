@@ -40,7 +40,17 @@ function getGrade(percentage) {
   return "Keep practicing";
 }
 
+/**
+ * Formats a non-negative whole number of seconds for the timer display.
+ */
+function formatTimeLeft(seconds) {
+  if (!Number.isSafeInteger(seconds) || seconds < 0) {
+    throw new RangeError("seconds must be a non-negative integer");
+  }
+  return `⏱ ${seconds}s`;
+}
+
 // Lets Node.js tests load this file. Browsers ignore this block.
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { shuffle, isCorrect, calculatePercentage, getGrade };
+  module.exports = { shuffle, isCorrect, calculatePercentage, getGrade, formatTimeLeft };
 }
